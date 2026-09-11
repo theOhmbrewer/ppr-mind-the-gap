@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mind-the-gap",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\Nugen\\AppData\\Local\\Temp\\claude\\C--Users-Nugen-OneDrive-Desktop-dev-closet\\a4e1d558-b788-4f9a-8e94-8513baddf624\\scratchpad\\serve.js",
+        "5178"
+      ],
+      "port": 5178
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mind the Gap — perceived partner responsiveness</title>
+<meta name="description" content="A two-sided reflection tool based on the Perceived Partner Responsiveness Scale. Compare how responsive one partner intends to be with how responsive the other actually feels.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main class="wrap">
+
+  <!-- ============================================================ intro -->
+  <section id="intro" class="screen">
+    <header class="masthead">
+      <p class="eyebrow">A conversation starter, not a test</p>
+      <h1 tabindex="-1">Mind the Gap</h1>
+      <p class="standfirst">
+        Most of the time, when one person feels unseen, it isn’t because the other
+        isn’t trying. It’s because the trying isn’t arriving. This tool measures
+        both halves of that — what one of you intends, and what the other
+        actually experiences — and shows you the distance between them.
+      </p>
+    </header>
+
+    <div class="card">
+      <h2 tabindex="-1">How it works</h2>
+      <ol class="steps">
+        <li><strong>You each answer 18 questions</strong>, separately, about four minutes each.</li>
+        <li><strong>One of you answers about the other</strong> — how understood and valued you feel.
+            <strong>The other answers about themselves</strong> — how well they think they do those things.</li>
+        <li><strong>You swap the short codes</strong> you get at the end, and see the comparison.</li>
+      </ol>
+      <p class="aside">
+        Both of you are describing the <em>same person’s</em> responsiveness, from the
+        inside and the outside. Run it a second time with the roles swapped to see the
+        other direction.
+      </p>
+    </div>
+
+    <div class="choose">
+      <h2>Which are you answering?</h2>
+      <div class="choose-grid">
+        <button id="start-f" class="choice" type="button">
+          <span class="choice-kicker">The receiving side</span>
+          <span class="choice-title">How my partner is with me</span>
+          <span class="choice-body">You’ll rate how understood, valued and attended to you feel. Answer this if you want to be heard.</span>
+        </button>
+        <button id="start-g" class="choice" type="button">
+          <span class="choice-kicker">The giving side</span>
+          <span class="choice-title">How I show up for my partner</span>
+          <span class="choice-body">You’ll rate how well you think you understand and value them. Answer this if you want to know how it’s landing.</span>
+        </button>
+      </div>
+    </div>
+
+    <details class="note">
+      <summary>What this is, and what it isn’t</summary>
+      <div class="note-body">
+        <p>
+          The questions are the <strong>Perceived Partner Responsiveness Scale</strong>, a
+          published research instrument. It measures a <em>perception</em> — your belief
+          about how another person sees you. Reis, Clark and Holmes, who developed the
+          underlying theory, are careful about this: these perceptions contain a real
+          “kernel of truth,” but they are also shaped by mood, history and how secure
+          you feel in general. A low score is not proof that someone is failing you,
+          and a high one is not proof that they aren’t.
+        </p>
+        <p>
+          <strong>There are no norms here on purpose.</strong> The published papers report
+          reliability and correlations, but no population averages or percentile
+          bands — so this tool will never tell you that you scored “above average” or
+          “in the bottom quarter.” Anyone who shows you those numbers for this scale
+          made them up. What you get instead is where your answers sit on the scale
+          you just used, which is the honest version.
+        </p>
+        <p>
+          Expectations are also relative. The same act reads as neglectful from a
+          spouse and thoughtful from a neighbour — the theory calls this
+          <em>communal strength</em>. You are answering about one specific relationship,
+          with all the expectations that come with it.
+        </p>
+        <p>
+          This is not a diagnostic instrument, not therapy, and not a verdict on a
+          relationship. If it surfaces something heavy, that is a sign to talk to
+          each other or to a professional — not to trust a number.
+        </p>
+        <p class="cite">
+          Reis, H. T., &amp; Carmichael, C. L. (2006). <em>Perceived Partner Responsiveness
+          Scale</em>. Profiled in Reis, H. T., Crasta, D., Rogge, R. D., Maniaci, M. R., &amp;
+          Carmichael, C. L. (2018), in D. L. Worthington &amp; G. D. Bodie (Eds.),
+          <em>The Sourcebook of Listening Research: Methodology and Measures</em> (pp. 516–521).
+          Wiley. Scale reproduced with permission of Harry Reis.
+        </p>
+        <p class="cite">
+          Reis, H. T., Clark, M. S., &amp; Holmes, J. G. (2004). Perceived partner
+          responsiveness as an organizing construct in the study of intimacy and
+          closeness. In D. J. Mashek &amp; A. Aron (Eds.), <em>Handbook of Closeness and
+          Intimacy</em> (pp. 201–225). Lawrence Erlbaum.
+        </p>
+        <p class="cite">
+          Rice, T. M., Kumashiro, M., &amp; Arriaga, X. B. (2020). Mind the gap:
+          Perceived partner responsiveness as a bridge between general and
+          partner-specific attachment security. <em>International Journal of
+          Environmental Research and Public Health, 17</em>(19), 7178.
+        </p>
+      </div>
+    </details>
+
+    <p class="privacy">
+      Nothing you answer is stored or sent anywhere. It exists in this browser tab
+      until you close it, and travels only as the code you choose to share.
+    </p>
+  </section>
+
+  <!-- ============================================================= quiz -->
+  <section id="quiz" class="screen" hidden>
+    <div class="progress">
+      <div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div>
+      <p id="progress-text" class="progress-text">Question 1 of 18</p>
+    </div>
+
+    <div class="question">
+      <p id="stem" class="stem">My partner usually…</p>
+      <h2 id="item-text" tabindex="-1" class="item-text">…</h2>
+    </div>
+
+    <div id="scale" class="scale" role="group" aria-label="Rate from 1, not at all true, to 9, completely true"></div>
+
+    <div class="quiz-foot">
+      <button id="back" class="ghost" type="button">Back</button>
+      <p class="quiz-hint">Answer with your gut. There’s no right one.</p>
+    </div>
+  </section>
+
+  <!-- =========================================================== result -->
+  <section id="result" class="screen" hidden>
+    <h2 id="result-title" tabindex="-1">Your result</h2>
+    <p id="result-lede" class="standfirst"></p>
+
+    <div id="own-scores" class="scores"></div>
+
+    <div class="card share">
+      <h3>Your code</h3>
+      <p>Send this to your partner. It carries your 18 answers and nothing else — no name, no device, nothing that leaves this page on its own.</p>
+      <div class="code-box">
+        <code id="code-out">—</code>
+        <button id="copy-btn" class="ghost" type="button">Copy</button>
+      </div>
+    </div>
+
+    <div class="card compare-box">
+      <h3>Seen their code?</h3>
+      <p>Paste it here to see where your two readings line up and where they don’t.</p>
+      <label class="sr-only" for="partner-code">Partner’s code</label>
+      <input id="partner-code" type="text" inputmode="latin" autocomplete="off"
+             spellcheck="false" placeholder="ABCD-EFGH-JKMNP">
+      <p id="compare-error" class="error" hidden></p>
+      <button id="compare-btn" class="primary" type="button">Compare</button>
+    </div>
+
+    <button id="restart" class="ghost quiet" type="button">Start over</button>
+  </section>
+
+  <!-- ======================================================= comparison -->
+  <section id="comparison" class="screen" hidden>
+    <h2 tabindex="-1">Where you meet, and where you miss</h2>
+    <p class="standfirst">
+      Two readings of the same thing: how responsive one of you is being.
+      <strong>Experienced</strong> is what actually lands. <strong>Intended</strong> is
+      what the other believes they’re giving.
+    </p>
+
+    <div id="gap-summary" class="gaps"></div>
+
+    <p id="gap-read" class="read"></p>
+
+    <details id="detail" class="note">
+      <summary>Show me the specifics, item by item</summary>
+      <div class="note-body">
+        <p class="warn">
+          This is the sharp end. It lists, in order, the places where one person’s
+          sense of what they give is furthest from what the other receives. It’s
+          useful material for a conversation and a rough thing to read alone.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Item</th><th class="num">Experienced</th><th class="num">Intended</th><th class="num">Gap</th></tr>
+            </thead>
+            <tbody id="item-rows"></tbody>
+          </table>
+        </div>
+        <p class="aside">
+          A positive gap means it’s believed to be given more than it’s felt. A
+          negative gap means more is landing than is being claimed.
+        </p>
+      </div>
+    </details>
+
+    <div class="card">
+      <h3>What to do with this</h3>
+      <p>
+        The useful question is almost never “who’s right.” Both numbers are real:
+        one person really is trying that hard, and the other really doesn’t feel it.
+        The gap is about form, not effort — so the conversation worth having is
+        <em>what would this look like if it landed?</em>, item by item, for the two or
+        three biggest gaps only.
+      </p>
+    </div>
+
+    <button id="back-to-result" class="ghost quiet" type="button">Back to your result</button>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p>Built for reflection, not assessment. Uses the PPRS (Reis &amp; Carmichael, 2006); see the notes on the first screen for citations and limits.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
