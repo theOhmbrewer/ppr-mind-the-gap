@@ -24,23 +24,44 @@
       </p>
     </header>
 
+    <div id="start-session-wrap" class="card start-card" hidden>
+      <h2 tabindex="-1">Do this together</h2>
+      <p>
+        Start a shared session and you’ll get a link to send your partner. You each
+        answer two short sets — one about them, one about yourself — whenever suits,
+        and the comparisons appear as the pieces arrive. No accounts, no names.
+      </p>
+      <p class="aside">
+        The session deletes itself after 30 days. Anyone holding the link can see it,
+        so send it only to them.
+      </p>
+      <button id="start-session" class="primary big" type="button">Start a session</button>
+    </div>
+
+    <p id="intro-api-note" class="error boxed" hidden>
+      That session link can’t be opened because no server is configured for this
+      copy of the site. You can still use the code-based version below.
+    </p>
+
     <div class="card">
-      <h2 tabindex="-1">How it works</h2>
+      <h2>How it works</h2>
       <ol class="steps">
         <li><strong>You each answer 18 questions</strong>, separately, about four minutes each.</li>
         <li><strong>One of you answers about the other</strong> — how understood and valued you feel.
             <strong>The other answers about themselves</strong> — how well they think they do those things.</li>
-        <li><strong>You swap the short codes</strong> you get at the end, and see the comparison.</li>
+        <li><strong>The two readings are compared</strong>, so you can see where intent and experience diverge.</li>
       </ol>
       <p class="aside">
         Both of you are describing the <em>same person’s</em> responsiveness, from the
-        inside and the outside. Run it a second time with the roles swapped to see the
-        other direction.
+        inside and the outside. Do it in both directions to see the full picture.
       </p>
     </div>
 
     <div class="choose">
-      <h2>Which are you answering?</h2>
+      <h2>Answer on your own</h2>
+      <p class="aside spaced">
+        No session, no server — you’ll get a short code to swap with your partner.
+      </p>
       <div class="choose-grid">
         <button id="start-f" class="choice" type="button">
           <span class="choice-kicker">The receiving side</span>
@@ -54,6 +75,12 @@
         </button>
       </div>
     </div>
+
+    <p id="storage-note" class="error boxed" hidden>
+      This browser won’t let the page save anything locally (private browsing, or
+      site data is blocked). Everything still works, but nothing will be remembered
+      once you close the tab.
+    </p>
 
     <details class="note">
       <summary>What this is, and what it isn’t</summary>
@@ -108,10 +135,32 @@
       </div>
     </details>
 
-    <p class="privacy">
-      Nothing you answer is stored or sent anywhere. It exists in this browser tab
-      until you close it, and travels only as the code you choose to share.
+    <details class="note">
+      <summary>What this page stores</summary>
+      <div class="note-body">
+        <p>
+          Your answers are saved in <strong>this browser</strong> so you can come back to
+          them. If you start a session, they’re also sent to a small server that holds
+          nothing but a random session id, two anonymous device ids, and the numbers
+          you chose — no name, no email, no account. That session deletes itself
+          automatically after 30 days.
+        </p>
+        <p>
+          If you answer on your own with codes, nothing is sent anywhere at all.
+        </p>
+        <button id="forget" class="ghost" type="button">Forget everything saved in this browser</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============================================================== hub -->
+  <section id="hub" class="screen" hidden>
+    <h2 tabindex="-1">Your session</h2>
+    <p class="standfirst">
+      Answer your two sheets whenever you like. Each comparison unlocks as soon as
+      both of its halves are in.
     </p>
+    <div id="hub-body"></div>
   </section>
 
   <!-- ============================================================= quiz -->
@@ -139,18 +188,26 @@
     <h2 id="result-title" tabindex="-1">Your result</h2>
     <p id="result-lede" class="standfirst"></p>
 
+    <p id="sync-note" class="sync" hidden></p>
+
     <div id="own-scores" class="scores"></div>
 
-    <div class="card share">
-      <h3>Your code</h3>
-      <p>Send this to your partner. It carries your 18 answers and nothing else — no name, no device, nothing that leaves this page on its own.</p>
-      <div class="code-box">
-        <code id="code-out">—</code>
-        <button id="copy-btn" class="ghost" type="button">Copy</button>
-      </div>
-    </div>
+    <button id="to-hub" class="primary" type="button" hidden>Back to your session</button>
 
-    <div class="card compare-box">
+    <details id="codes-detail" class="note" open>
+      <summary>Share this as a code instead</summary>
+      <div class="note-body">
+        <div id="share">
+          <p>Send this to your partner. It carries your 18 answers and nothing else — no name, no device, nothing that leaves this page on its own.</p>
+          <div class="code-box">
+            <code id="code-out">—</code>
+            <button id="copy-btn" class="ghost" type="button">Copy</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div id="compare-box" class="card">
       <h3>Seen their code?</h3>
       <p>Paste it here to see where your two readings line up and where they don’t.</p>
       <label class="sr-only" for="partner-code">Partner’s code</label>
@@ -165,12 +222,8 @@
 
   <!-- ======================================================= comparison -->
   <section id="comparison" class="screen" hidden>
-    <h2 tabindex="-1">Where you meet, and where you miss</h2>
-    <p class="standfirst">
-      Two readings of the same thing: how responsive one of you is being.
-      <strong>Experienced</strong> is what actually lands. <strong>Intended</strong> is
-      what the other believes they’re giving.
-    </p>
+    <h2 id="comparison-title" tabindex="-1">Where you meet, and where you miss</h2>
+    <p id="comparison-lede" class="standfirst"></p>
 
     <div id="gap-summary" class="gaps"></div>
 
@@ -210,6 +263,7 @@
       </p>
     </div>
 
+    <button id="back-to-hub" class="ghost quiet" type="button" hidden>Back to your session</button>
     <button id="back-to-result" class="ghost quiet" type="button">Back to your result</button>
   </section>
 
@@ -220,5 +274,7 @@
 </footer>
 
 <script src="app.js"></script>
+<script src="store.js"></script>
+<script src="ui.js"></script>
 </body>
 </html>

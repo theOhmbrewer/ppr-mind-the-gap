@@ -1,6 +1,8 @@
 /* Round-trip and sanity checks for the share code. Run: node test.js */
 
-const { ITEMS, encodeSheet, decodeSheet, score, mean } = require('./app.js');
+const {
+  ITEMS, encodeSheet, decodeSheet, score, mean, answersToList, listToAnswers
+} = require('./app.js');
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -113,6 +115,30 @@ const m = score(mixed);
 check('subscales separate correctly',
       m.validation.sum === 72 && m.understanding.sum === 16 && m.general.sum === 4,
       'v=' + m.validation.sum + ' u=' + m.understanding.sum + ' g=' + m.general.sum);
+
+// The wire format the Worker stores and validates.
+const wire = {};
+ITEMS.forEach((it, i) => { wire[it.id] = (i % 9) + 1; });
+const list = answersToList(wire);
+check('answersToList gives 18 in item order', list.length === 18 && list[0] === 1 && list[8] === 9);
+check('listToAnswers round-trips', ITEMS.every(i => listToAnswers(list)[i.id] === wire[i.id]));
+check('listToAnswers rejects wrong length', listToAnswers([1, 2, 3]) === null);
+check('listToAnswers rejects out-of-range', listToAnswers(list.map((v, i) => (i === 0 ? 10 : v))) === null);
+check('listToAnswers rejects non-integers', listToAnswers(list.map((v, i) => (i === 0 ? 4.5 : v))) === null);
+check('listToAnswers rejects non-arrays', listToAnswers('nope') === null);
+
+// The id shape the Worker's regex accepts must match what the client mints.
+const ID_RE = /^[0-9A-HJKMNP-TV-Z]{20}$/;
+const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+let badIds = 0;
+for (let t = 0; t < 5000; t++) {
+  let id = '';
+  for (let i = 0; i < 20; i++) id += CROCKFORD[Math.floor(Math.random() * 32)];
+  if (!ID_RE.test(id)) badIds++;
+}
+check('worker id pattern accepts every client-minted id', badIds === 0, badIds + ' rejected');
+check('worker id pattern rejects I/L/O/U', !ID_RE.test('IIIIIIIIIIIIIIIIIIII') && !ID_RE.test('UUUUUUUUUUUUUUUUUUUU'));
+check('worker id pattern rejects wrong length', !ID_RE.test('ABCD'));
 
 console.log('');
 console.log(failures === 0 ? 'All checks passed.' : failures + ' check(s) FAILED.');

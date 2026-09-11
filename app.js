@@ -1,17 +1,18 @@
-/* Mind the Gap — a two-sided perceived partner responsiveness tool.
+/* Mind the Gap — core logic: the items, the scoring, and the share code.
+ *
+ * This file is deliberately pure. No DOM, no network, no storage — so it can
+ * be tested with `node test.js`. The UI lives in ui.js and the storage and
+ * API client in store.js.
  *
  * The instrument is the Perceived Partner Responsiveness Scale (PPRS),
  * Reis & Carmichael (2006), as profiled in Reis, Crasta, Rogge, Maniaci &
  * Carmichael (2018). 18 items, 9-point scale, scored by summation.
  *
- * Two roles:
- *   F ("felt")  — you rate your partner's responsiveness to you.
- *   G ("given") — you rate your own responsiveness to your partner.
- * Pair one of each and the difference is the gap between what one person
+ * Two roles, and the distinction is the whole point of the tool:
+ *   F ("felt")  — you rate your PARTNER's responsiveness to you.
+ *   G ("given") — you rate YOUR OWN responsiveness to your partner.
+ * One of each, about the same person, gives the gap between what someone
  * intends and what the other actually experiences.
- *
- * Nothing is stored and nothing is sent anywhere. Results travel as a short
- * code that you choose to share.
  */
 
 /* ---------------------------------------------------------------- items */
@@ -110,7 +111,11 @@ const ANCHORS = [
 /* An answer sheet is 18 values of 1-9 plus a role flag. Packed as a single
  * number in base 9, then written in Crockford base32 (no I, L, O or U, so
  * there is nothing to misread when you text it). 12 characters of data plus
- * one check character. */
+ * one check character.
+ *
+ * Codes still exist even now that sessions are stored: they are the fallback
+ * when the API is unreachable, and they keep the tool usable with no server
+ * at all. */
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const DATA_LEN = 12;
@@ -173,6 +178,23 @@ function prettyCode(code) {
   return code.slice(0, 4) + '-' + code.slice(4, 8) + '-' + code.slice(8);
 }
 
+/* Answers move over the wire as a plain array in item order, which is what
+ * the Worker validates and stores. */
+function answersToList(answers) {
+  return ITEMS.map(i => answers[i.id]);
+}
+
+function listToAnswers(list) {
+  if (!Array.isArray(list) || list.length !== ITEMS.length) return null;
+  const answers = {};
+  for (let i = 0; i < ITEMS.length; i++) {
+    const v = list[i];
+    if (!Number.isInteger(v) || v < 1 || v > 9) return null;
+    answers[ITEMS[i].id] = v;
+  }
+  return answers;
+}
+
 /* -------------------------------------------------------------- scoring */
 
 /* The published scoring is simple summation. Totals are reported alongside
@@ -213,306 +235,10 @@ function describe(m) {
   return 'toward “not at all true”';
 }
 
-/* ----------------------------------------------------------------- state */
-
-const state = {
-  role: null,
-  order: [],
-  index: 0,
-  answers: {},
-  myCode: null
-};
-
-function shuffled(list) {
-  const a = list.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-/* ------------------------------------------------------------- rendering */
-
-const $ = sel => document.querySelector(sel);
-const screens = () => document.querySelectorAll('.screen');
-
-function show(id) {
-  screens().forEach(s => { s.hidden = (s.id !== id); });
-  window.scrollTo({ top: 0, behavior: 'instant' });
-  const h = document.querySelector('#' + id + ' h2, #' + id + ' h1');
-  if (h) h.focus();
-}
-
-function el(tag, attrs = {}, ...kids) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') node.className = v;
-    else if (k === 'text') node.textContent = v;
-    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k, v);
-  }
-  for (const kid of kids) if (kid) node.append(kid);
-  return node;
-}
-
-/* ---- the quiz ---- */
-
-function startQuiz(role) {
-  state.role = role;
-  state.order = shuffled(ITEMS);
-  state.index = 0;
-  state.answers = {};
-  state.myCode = null;
-  $('#stem').textContent = role === 'F' ? 'My partner usually…' : 'I usually…';
-  renderQuestion();
-  show('quiz');
-}
-
-function renderQuestion() {
-  const item = state.order[state.index];
-  const n = state.order.length;
-
-  $('#progress-bar').style.width = ((state.index) / n * 100) + '%';
-  $('#progress-text').textContent = 'Question ' + (state.index + 1) + ' of ' + n;
-
-  $('#item-text').textContent = state.role === 'F' ? item.f : item.g;
-
-  const scale = $('#scale');
-  scale.replaceChildren();
-  for (let v = 1; v <= 9; v++) {
-    const anchor = ANCHORS.find(a => a.v === v);
-    const btn = el('button', {
-      class: 'dot' + (state.answers[item.id] === v ? ' chosen' : ''),
-      type: 'button',
-      'aria-label': v + (anchor ? ' — ' + anchor.label : ''),
-      onclick: () => answer(item.id, v)
-    }, el('span', { class: 'dot-num', text: String(v) }),
-       anchor ? el('span', { class: 'dot-label', text: anchor.label }) : null);
-    scale.append(btn);
-  }
-
-  $('#back').disabled = state.index === 0;
-}
-
-function answer(itemId, value) {
-  state.answers[itemId] = value;
-  renderQuestion();
-  // A short pause so the choice visibly registers before the next item.
-  setTimeout(() => {
-    if (state.index < state.order.length - 1) {
-      state.index++;
-      renderQuestion();
-    } else {
-      finish();
-    }
-  }, 180);
-}
-
-function finish() {
-  state.myCode = encodeSheet(state.role, state.answers);
-  renderOwnResult();
-  show('result');
-}
-
-/* ---- your own result ---- */
-
-function renderOwnResult() {
-  const s = score(state.answers);
-  const isF = state.role === 'F';
-
-  $('#result-title').textContent = isF
-    ? 'How responsive your partner feels to you'
-    : 'How responsive you believe you are';
-
-  $('#result-lede').textContent = isF
-    ? 'This is your experience of being understood and valued by your partner. It is a reading of how things land for you — not a measurement of what your partner intends.'
-    : 'This is your own account of how you show up for your partner. Where it differs from their experience is the interesting part.';
-
-  // The subscales mean different things depending on which side you answered,
-  // so the descriptions have to follow the role.
-  const notes = isF
-    ? {
-        total: 'All 18 items',
-        understanding: 'Feeling accurately known — that your partner “gets things right” about you',
-        validation: 'Feeling appreciated and valued for who you actually are'
-      }
-    : {
-        total: 'All 18 items',
-        understanding: 'How accurately you believe you read them — whether you “get things right” about who they are',
-        validation: 'How much you believe you show them they’re appreciated and valued'
-      };
-
-  const box = $('#own-scores');
-  box.replaceChildren(
-    scoreRow('Overall', s.total, notes.total),
-    scoreRow('Understanding', s.understanding, notes.understanding),
-    scoreRow('Validation', s.validation, notes.validation)
-  );
-
-  $('#code-out').textContent = prettyCode(state.myCode);
-}
-
-function scoreRow(label, part, note) {
-  const m = mean(part);
-  return el('div', { class: 'score-row' },
-    el('div', { class: 'score-head' },
-      el('h4', { text: label }),
-      el('div', { class: 'score-num' },
-        el('strong', { text: m.toFixed(1) }),
-        el('span', { text: ' / 9' }))),
-    el('div', { class: 'meter' },
-      el('div', { class: 'meter-fill', style: 'width:' + ((m - 1) / 8 * 100) + '%' })),
-    el('p', { class: 'score-note', text: note + ' — ' + describe(m) + '. Sum: ' + part.sum + '/' + (part.n * 9) + '.' })
-  );
-}
-
-/* ---- the comparison ---- */
-
-function compare() {
-  const theirs = decodeSheet($('#partner-code').value);
-  const msg = $('#compare-error');
-
-  if (!theirs.ok) {
-    msg.textContent = theirs.why === 'check'
-      ? 'That code doesn’t look right — there may be a typo. Check it against what they sent you.'
-      : 'That doesn’t look like a complete code. It should be 13 characters, like ABCD-EFGH-JKMNP.';
-    msg.hidden = false;
-    return;
-  }
-  if (theirs.role === state.role) {
-    msg.textContent = state.role === 'F'
-      ? 'You both answered about your partner. For a comparison, one of you needs to answer the “how I show up” version instead.'
-      : 'You both answered about yourselves. For a comparison, one of you needs to answer the “how my partner is with me” version instead.';
-    msg.hidden = false;
-    return;
-  }
-  msg.hidden = true;
-
-  const felt  = state.role === 'F' ? state.answers : theirs.answers;
-  const given = state.role === 'G' ? state.answers : theirs.answers;
-  renderComparison(felt, given);
-  show('comparison');
-}
-
-function renderComparison(felt, given) {
-  const sf = score(felt);
-  const sg = score(given);
-
-  $('#gap-summary').replaceChildren(
-    gapRow('Overall', sf.total, sg.total),
-    gapRow('Understanding', sf.understanding, sg.understanding),
-    gapRow('Validation', sf.validation, sg.validation)
-  );
-
-  const overall = mean(sg.total) - mean(sf.total);
-  $('#gap-read').textContent = readGap(overall);
-
-  // Item detail stays collapsed until someone deliberately opens it.
-  const rows = ITEMS
-    .map(item => ({ item, f: felt[item.id], g: given[item.id], d: given[item.id] - felt[item.id] }))
-    .sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
-
-  $('#item-rows').replaceChildren(...rows.map(r => el('tr', {},
-    el('td', { class: 'item-label', text: r.item.short }),
-    el('td', { class: 'num', text: String(r.f) }),
-    el('td', { class: 'num', text: String(r.g) }),
-    el('td', { class: 'num gap ' + (r.d > 0 ? 'over' : r.d < 0 ? 'under' : 'even'),
-               text: (r.d > 0 ? '+' : '') + r.d })
-  )));
-
-  $('#detail').open = false;
-}
-
-function gapRow(label, feltPart, givenPart) {
-  const f = mean(feltPart);
-  const g = mean(givenPart);
-  const d = g - f;
-
-  return el('div', { class: 'gap-row' },
-    el('h4', { text: label }),
-    el('div', { class: 'gap-bars' },
-      barLine('Experienced', f, 'felt'),
-      barLine('Intended', g, 'given')),
-    el('p', { class: 'gap-delta ' + (Math.abs(d) < 0.5 ? 'close' : d > 0 ? 'over' : 'under'),
-              text: Math.abs(d) < 0.5
-                ? 'Closely matched (' + (d >= 0 ? '+' : '') + d.toFixed(1) + ')'
-                : (d > 0 ? '+' : '') + d.toFixed(1) + ' point gap' })
-  );
-}
-
-function barLine(label, m, cls) {
-  return el('div', { class: 'bar-line' },
-    el('span', { class: 'bar-label', text: label }),
-    el('span', { class: 'bar-track' },
-      el('span', { class: 'bar-fill ' + cls, style: 'width:' + ((m - 1) / 8 * 100) + '%' })),
-    el('span', { class: 'bar-val', text: m.toFixed(1) }));
-}
-
-function readGap(d) {
-  if (Math.abs(d) < 0.5) {
-    return 'These two readings sit close together. What one of you is trying to give is landing about the way it was meant to — which is worth noticing, not just the gaps.';
-  }
-  if (d > 0) {
-    return 'The giving side reads higher than the receiving side. That usually is not a story about effort; it is a story about effort not arriving in a form the other person recognises. The per-item view below is where that gets specific.';
-  }
-  return 'The receiving side reads higher than the giving side — more is landing than is being claimed. People often underrate what they are actually providing, and this is a good thing to say out loud.';
-}
-
-/* ------------------------------------------------------------------ wire */
-
-function copyCode() {
-  // Clipboard writes fail in plenty of ordinary situations — an insecure
-  // origin, a browser that blocks them, an embedded frame — so the fallback
-  // selects the code and says so, rather than appearing to do nothing.
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(prettyCode(state.myCode))
-      .then(() => flashCopyBtn('Copied'), selectCode);
-  } else {
-    selectCode();
-  }
-}
-
-function selectCode() {
-  const range = document.createRange();
-  range.selectNodeContents($('#code-out'));
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  flashCopyBtn('Press Ctrl+C', 2600);
-}
-
-function flashCopyBtn(text, ms = 1400) {
-  const b = $('#copy-btn');
-  if (b.dataset.label === undefined) b.dataset.label = b.textContent;
-  b.textContent = text;
-  clearTimeout(flashCopyBtn.timer);
-  flashCopyBtn.timer = setTimeout(() => { b.textContent = b.dataset.label; }, ms);
-}
-
-function init() {
-  $('#start-f').addEventListener('click', () => startQuiz('F'));
-  $('#start-g').addEventListener('click', () => startQuiz('G'));
-
-  $('#back').addEventListener('click', () => {
-    if (state.index > 0) { state.index--; renderQuestion(); }
-  });
-
-  $('#copy-btn').addEventListener('click', copyCode);
-  $('#compare-btn').addEventListener('click', compare);
-  $('#restart').addEventListener('click', () => show('intro'));
-  $('#back-to-result').addEventListener('click', () => show('result'));
-
-  $('#partner-code').addEventListener('input', () => { $('#compare-error').hidden = true; });
-
-  show('intro');
-}
-
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', init);
-}
-
-/* Exported only so the test script can check the codec and scoring. */
+/* Exported for test.js; harmless in the browser. */
 if (typeof module !== 'undefined') {
-  module.exports = { ITEMS, encodeSheet, decodeSheet, score, mean, describe, checkChar };
+  module.exports = {
+    ITEMS, ANCHORS, encodeSheet, decodeSheet, checkChar, prettyCode,
+    answersToList, listToAnswers, score, mean, describe
+  };
 }

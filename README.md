@@ -11,52 +11,122 @@ the distance between the two.
 That distance is the point. A large gap usually isn't a story about effort; it's a
 story about effort not arriving in a form the other person recognises.
 
-## Running it
+## The two ways to use it
 
-It's a static page — no build step, no dependencies, no server required.
+**Sessions.** One of you starts a session and sends the other a link. You each answer
+two sheets — one about your partner, one about yourself — whenever suits. Both
+comparisons unlock as their halves arrive. This needs the API (below).
 
-Open `index.html` in a browser. That's it.
+**Codes.** No server at all. You each answer one sheet and get a 13-character code
+like `56MJ-EZA7-PE2PV` to swap. The comparison is computed in the browser.
 
-To run the tests for the share-code logic and the scoring:
+Codes always work. If the API isn't configured or can't be reached, the app falls
+back to them on its own — the server is an upgrade, never a dependency.
+
+## Running it locally
+
+The page is static, so for the code-based flow you can just open `index.html`.
+
+For the session flow you need the API running too:
+
+```bash
+cd api && npx wrangler dev --port 8787
+```
+
+Then serve the page from `localhost` (any static server) and it will talk to that
+local Worker automatically — `store.js` switches to `127.0.0.1:8787` whenever the
+hostname is localhost, so testing never touches deployed data.
+
+Tests:
 
 ```bash
 node test.js
 ```
 
-## How the sharing works
+```bash
+cd api && node test-api.js
+```
 
-There's no backend and nothing is stored anywhere. When you finish, your 18 answers
-are packed into a 13-character code like `56MJ-EZA7-PE2PV`, which you send to your
-partner. They paste it in and the comparison is computed in their browser.
-
-The code is your answers in base 9, written in
-[Crockford base32](https://www.crockford.com/base32.html) — an alphabet with no
-`I`, `L`, `O` or `U`, so there's nothing to misread when you text it. The last
-character is a checksum. It catches **every** single-character typo and about 96% of
-adjacent transpositions, so a mistyped code gets rejected rather than silently
-decoding to the wrong answers.
-
-Lowercase, missing dashes and stray spaces are all accepted.
+`test.js` covers the items, the scoring and the share code. `test-api.js` exercises
+the Worker — joining, storing sheets, validation, access control and CORS. Point it
+at a URL to test the deployed one: `node test-api.js https://your-worker.workers.dev`.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `index.html` | All four screens: intro, quiz, your result, the comparison |
-| `style.css` | Everything visual. Light and dark themes follow the device setting |
-| `app.js` | Items, scoring, the share code, and the screen logic |
-| `test.js` | Checks on the code and the scoring. Run with `node test.js` |
+| `index.html` | All five screens: intro, session hub, quiz, your result, comparison |
+| `style.css` | Everything visual. Light and dark follow the device setting |
+| `app.js` | Items, scoring, share code. Pure logic, no DOM — this is what `test.js` tests |
+| `store.js` | Browser storage and the API client. **The one line you edit after deploying** |
+| `ui.js` | Screens, flow, session hub |
+| `test.js` | Checks on the code and the scoring |
+| `api/src/index.js` | The Worker. Three routes, about 150 lines |
+| `api/wrangler.jsonc` | Worker config. Needs your KV namespace id pasted in |
+| `api/test-api.js` | Checks on the API |
 
-## Deploying it
+## Deploying
 
-Any static host works, since there's nothing to build. GitHub Pages is free:
+### The page (GitHub Pages)
 
-1. Create an empty repository on GitHub (don't add a README — this folder has one).
-2. Connect this folder to it and push.
-3. In the repo's **Settings → Pages**, set the source to your `main` branch, root folder.
-4. A minute or so later it's live at `https://<your-username>.github.io/<repo-name>/`.
+Already done. Commit in GitHub Desktop, press **Push origin**, and the live site
+updates a minute or so later.
 
-That URL is what you send your partner. They don't need an account for anything.
+### The API (Cloudflare Workers)
+
+You need a free Cloudflare account. Then, from inside `api/`:
+
+```bash
+npx wrangler login
+```
+
+```bash
+npx wrangler kv namespace create SESSIONS
+```
+
+That prints an id. Paste it into `api/wrangler.jsonc`, replacing
+`PASTE_KV_NAMESPACE_ID_HERE`. Then:
+
+```bash
+npx wrangler deploy
+```
+
+It prints your Worker's URL. Paste that into `store.js` as `API_PRODUCTION`, commit,
+and push. Sessions are live.
+
+If you ever change where the page is hosted, update `ALLOWED_ORIGIN` in
+`api/wrangler.jsonc` and redeploy — the Worker only accepts calls from listed
+origins.
+
+## What gets stored, and where
+
+**In your browser.** Your participant id and your own answer sheets, so the page
+remembers you. Cleared with the "Forget everything" button on the first screen.
+
+**On the server, only if you start a session.** A random session id, up to two
+anonymous participant ids, and up to four sheets of eighteen numbers. No name, no
+email, no account, no analytics, no logging of answers.
+
+Sessions carry a 30-day expiry set on the KV write itself, so they delete themselves.
+There is no cleanup job to forget to run, and every write resets the clock — an
+active session stays, an abandoned one goes.
+
+**Anyone holding a session link can read that session.** There are no accounts, so
+the link is the key. Session ids are 20 characters of Crockford base32 (about 100
+bits), so they can't be guessed, but they can be forwarded. Send them accordingly.
+
+Using codes instead sends nothing anywhere at all.
+
+## The share code
+
+Your 18 answers in base 9, written in
+[Crockford base32](https://www.crockford.com/base32.html) — an alphabet with no
+`I`, `L`, `O` or `U`, so there's nothing to misread when you text it. The last
+character is a checksum with odd position weights, which catches **every**
+single-character typo and about 96% of adjacent transpositions. A mistyped code is
+rejected rather than silently decoding to the wrong answers.
+
+Lowercase, missing dashes and stray spaces are all accepted.
 
 ## About the instrument
 

@@ -1,0 +1,28 @@
+{
+  // Config for the session API. Deploy from inside this api/ folder:
+  //   npx wrangler deploy
+  //
+  // The KV namespace id below is filled in once, by running:
+  //   npx wrangler kv namespace create SESSIONS
+  // and pasting the id it prints.
+  "name": "mind-the-gap-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-11",
+
+  "observability": {
+    "enabled": true
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "PASTE_KV_NAMESPACE_ID_HERE"
+    }
+  ],
+
+  // Which sites may call this API. Comma-separated; localhost entries are for
+  // local development and can be removed once you're done testing.
+  "vars": {
+    "ALLOWED_ORIGIN": "https://theohmbrewer.github.io,http://localhost:5179,http://localhost:5178"
+  }
+}
