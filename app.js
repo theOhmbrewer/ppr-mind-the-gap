@@ -329,11 +329,25 @@ function renderOwnResult() {
     ? 'This is your experience of being understood and valued by your partner. It is a reading of how things land for you — not a measurement of what your partner intends.'
     : 'This is your own account of how you show up for your partner. Where it differs from their experience is the interesting part.';
 
+  // The subscales mean different things depending on which side you answered,
+  // so the descriptions have to follow the role.
+  const notes = isF
+    ? {
+        total: 'All 18 items',
+        understanding: 'Feeling accurately known — that your partner “gets things right” about you',
+        validation: 'Feeling appreciated and valued for who you actually are'
+      }
+    : {
+        total: 'All 18 items',
+        understanding: 'How accurately you believe you read them — whether you “get things right” about who they are',
+        validation: 'How much you believe you show them they’re appreciated and valued'
+      };
+
   const box = $('#own-scores');
   box.replaceChildren(
-    scoreRow('Overall', s.total, 'All 18 items'),
-    scoreRow('Understanding', s.understanding, 'Feeling accurately known — that someone “gets things right” about you'),
-    scoreRow('Validation', s.validation, 'Feeling appreciated and valued for who you actually are')
+    scoreRow('Overall', s.total, notes.total),
+    scoreRow('Understanding', s.understanding, notes.understanding),
+    scoreRow('Validation', s.validation, notes.validation)
   );
 
   $('#code-out').textContent = prettyCode(state.myCode);
@@ -448,15 +462,12 @@ function readGap(d) {
 /* ------------------------------------------------------------------ wire */
 
 function copyCode() {
-  const done = () => {
-    const b = $('#copy-btn');
-    const was = b.textContent;
-    b.textContent = 'Copied';
-    setTimeout(() => { b.textContent = was; }, 1400);
-  };
-  // Clipboard API needs a secure context; fall back to a manual selection.
+  // Clipboard writes fail in plenty of ordinary situations — an insecure
+  // origin, a browser that blocks them, an embedded frame — so the fallback
+  // selects the code and says so, rather than appearing to do nothing.
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(prettyCode(state.myCode)).then(done, selectCode);
+    navigator.clipboard.writeText(prettyCode(state.myCode))
+      .then(() => flashCopyBtn('Copied'), selectCode);
   } else {
     selectCode();
   }
@@ -468,6 +479,15 @@ function selectCode() {
   const sel = window.getSelection();
   sel.removeAllRanges();
   sel.addRange(range);
+  flashCopyBtn('Press Ctrl+C', 2600);
+}
+
+function flashCopyBtn(text, ms = 1400) {
+  const b = $('#copy-btn');
+  if (b.dataset.label === undefined) b.dataset.label = b.textContent;
+  b.textContent = text;
+  clearTimeout(flashCopyBtn.timer);
+  flashCopyBtn.timer = setTimeout(() => { b.textContent = b.dataset.label; }, ms);
 }
 
 function init() {
