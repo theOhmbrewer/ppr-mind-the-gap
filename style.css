@@ -299,7 +299,10 @@ p:last-child { margin-bottom: 0; }
 .scale {
   display: flex;
   gap: .4rem;
-  align-items: flex-start;
+  /* stretch, not flex-start: only 1/3/5/7/9 carry anchor labels, so without
+     this the even-numbered buttons are barely half the height of the odd ones
+     and are noticeably harder to hit on a phone. */
+  align-items: stretch;
 }
 
 .dot {
@@ -654,7 +657,9 @@ button.big {
   flex: 1 1 14rem;
   min-width: 0;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: .82rem;
+  /* Never below 16px: iOS Safari zooms the whole page when you focus an
+     input with smaller text, and it does not zoom back out. */
+  font-size: 16px;
   padding: .65rem .8rem;
   border: 1px dashed var(--line);
   border-radius: 10px;
