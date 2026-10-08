@@ -313,6 +313,8 @@ function renderQuestion() {
   $('#progress-bar').style.width = (state.index / n * 100) + '%';
   $('#progress-text').textContent = 'Question ' + (state.index + 1) + ' of ' + n;
   $('#item-text').textContent = state.role === 'F' ? item.f : item.g;
+  const hint = state.role === 'F' ? item.hf : item.hg;
+  $('#item-hint').textContent = 'In other words: ' + hint[0].toLowerCase() + hint.slice(1);
 
   const scale = $('#scale');
   scale.replaceChildren();
@@ -537,6 +539,7 @@ function renderGapTalk(felt, given) {
 
   const quote = r => el('li', {},
     el('q', { text: 'My partner ' + r.item.f }),
+    el('span', { class: 'talk-hint', text: r.item.hf }),
     el('span', { class: 'talk-nums', text: ' Felt ' + r.f + ' · Self-rated ' + r.g }));
 
   const kids = [

@@ -168,6 +168,12 @@ Two details from the profile that the code deliberately honours:
   tool describes where a score sits on the response scale and nothing more. Any
   version of this scale that tells you your percentile invented it.
 
+One detail the profile does **not** cover: under each question, in small type, is
+a one-line plain-language hint ("In other words: they show they like you and cheer
+you on"). The published wording is always shown above it, unchanged. The hints are
+this tool's own, not part of the scale, and a slight departure from how the scale
+was given in research.
+
 The scale also has a validated 12-item short form; those items are flagged with
 `in12: true` in `app.js` if you ever want to offer a quicker version.
 

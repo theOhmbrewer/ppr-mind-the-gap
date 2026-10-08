@@ -15,6 +15,7 @@ check('unique ids', new Set(ITEMS.map(i => i.id)).size === 18);
 check('8 understanding', ITEMS.filter(i => i.sub === 'understanding').length === 8);
 check('8 validation', ITEMS.filter(i => i.sub === 'validation').length === 8);
 check('2 general', ITEMS.filter(i => i.sub === 'general').length === 2);
+check('every item has both hints', ITEMS.every(i => i.hf && i.hg && i.hf !== i.f));
 check('12-item subset is 12', ITEMS.filter(i => i.in12).length === 12,
       ITEMS.filter(i => i.in12).length + ' flagged');
 

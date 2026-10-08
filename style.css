@@ -288,6 +288,12 @@ p:last-child { margin-bottom: 0; }
   margin: 0 0 .5rem;
 }
 
+.item-hint {
+  font-size: .9rem;
+  color: var(--ink-faint);
+  margin: .7rem 0 0;
+}
+
 .item-text {
   font-family: var(--serif);
   font-size: clamp(1.5rem, 5.5vw, 2.1rem);
@@ -775,3 +781,4 @@ button.link {
 .source .eyebrow { margin-bottom: .3rem; }
 .source .cite { margin-top: 0; overflow-wrap: anywhere; }
 .source .cite a { color: var(--accent); }
+.talk-hint { display: block; font-size: .85rem; color: var(--ink-soft); margin-top: .15rem; }
