@@ -182,7 +182,9 @@ p:last-child { margin-bottom: 0; }
   box-shadow: var(--shadow);
   transition: border-color .15s, transform .15s;
 }
-.choice:hover { border-color: var(--accent); transform: translateY(-2px); }
+@media (hover: hover) and (pointer: fine) {
+  .choice:hover { border-color: var(--accent); transform: translateY(-2px); }
+}
 
 .choice-kicker {
   font-size: .72rem;
@@ -341,7 +343,11 @@ p:last-child { margin-bottom: 0; }
   color: var(--ink-soft);
   transition: background .12s, border-color .12s, color .12s, transform .12s;
 }
-.dot:hover .dot-num { border-color: var(--accent); transform: scale(1.06); }
+/* Only where there is a real pointer: on touch screens :hover sticks to
+   the last spot tapped, which made the next question look pre-answered. */
+@media (hover: hover) and (pointer: fine) {
+  .dot:hover .dot-num { border-color: var(--accent); transform: scale(1.06); }
+}
 .dot.chosen .dot-num {
   background: var(--accent);
   border-color: var(--accent);
@@ -484,7 +490,9 @@ button.primary {
   cursor: pointer;
   transition: filter .15s;
 }
-button.primary:hover { filter: brightness(1.08); }
+@media (hover: hover) and (pointer: fine) {
+  button.primary:hover { filter: brightness(1.08); }
+}
 @media (prefers-color-scheme: dark) {
   button.primary { color: #1a1816; }
 }
@@ -500,7 +508,9 @@ button.ghost {
   cursor: pointer;
   transition: border-color .15s, color .15s;
 }
-button.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  button.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--ink); }
+}
 button.ghost:disabled { opacity: .35; cursor: default; }
 
 button.quiet {
