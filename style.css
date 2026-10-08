@@ -760,3 +760,18 @@ button.big {
   .table-scroll th, .table-scroll td { padding-left: .3rem; padding-right: .3rem; }
   .table-scroll th { font-size: .62rem; letter-spacing: .02em; }
 }
+
+/* ------------------------------------------------------------ sources */
+
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.source .eyebrow { margin-bottom: .3rem; }
+.source .cite { margin-top: 0; overflow-wrap: anywhere; }
+.source .cite a { color: var(--accent); }

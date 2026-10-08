@@ -779,6 +779,16 @@ function copyDesireCode() {
   }
 }
 
+/* ------------------------------------------------------------- sources */
+
+let sourcesFrom = 'intro';
+
+function openSources() {
+  const current = document.querySelector('.screen:not([hidden])');
+  sourcesFrom = current && current.id !== 'sources' ? current.id : 'intro';
+  show('sources');
+}
+
 /* ---------------------------------------------------------------- wire */
 
 function init() {
@@ -800,6 +810,7 @@ function init() {
 
   document.addEventListener('click', e => {
     if (e.target.closest('.open-desire')) openDesire();
+    if (e.target.closest('.open-sources')) openSources();
   });
   $('#ds-start-f').addEventListener('click', () => startDesire('F'));
   $('#ds-start-g').addEventListener('click', () => startDesire('G'));
@@ -810,6 +821,10 @@ function init() {
   $('#ds-back').addEventListener('click', () => {
     if (ds.from === 'hub') renderHub();
     show(ds.from);
+  });
+  $('#sources-back').addEventListener('click', () => {
+    if (sourcesFrom === 'hub') renderHub();
+    show(sourcesFrom);
   });
   renderDesirePrompts();
 

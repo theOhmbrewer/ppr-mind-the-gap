@@ -58,7 +58,7 @@ at a URL to test the deployed one: `node test-api.js https://your-worker.workers
 
 | File | What it is |
 |---|---|
-| `index.html` | All six screens: intro, session hub, quiz, your result, comparison, feeling desired |
+| `index.html` | All seven screens: intro, session hub, quiz, your result, comparison, feeling desired, sources |
 | `style.css` | Everything visual. Light and dark follow the device setting |
 | `app.js` | Items, scoring, share code. Pure logic, no DOM — this is what `test.js` tests |
 | `desire.js` | The optional Feeling desired tab: its two items, prompts and 3-character code. Also pure |
