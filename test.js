@@ -140,6 +140,51 @@ check('worker id pattern accepts every client-minted id', badIds === 0, badIds +
 check('worker id pattern rejects I/L/O/U', !ID_RE.test('IIIIIIIIIIIIIIIIIIII') && !ID_RE.test('UUUUUUUUUUUUUUUUUUUU'));
 check('worker id pattern rejects wrong length', !ID_RE.test('ABCD'));
 
+// ------------------------------------------------ feeling desired tab
+const {
+  SPECIAL_ITEMS, DESIRE_PROMPTS, encodeSpecial, decodeSpecial, specialMean
+} = require('./desire.js');
+
+check('2 feeling-special items', SPECIAL_ITEMS.length === 2);
+check('every prompt theme has prompts', DESIRE_PROMPTS.every(t => t.prompts.length > 0));
+
+// Only 50 possible sheets, so check every one rather than sampling.
+let dsFails = 0, dsSeen = new Set();
+for (const role of ['F', 'G']) {
+  for (let a = 1; a <= 5; a++) for (let b = 1; b <= 5; b++) {
+    const code = encodeSpecial(role, { 1: a, 2: b });
+    dsSeen.add(code);
+    const back = decodeSpecial(code);
+    if (code.length !== 3 || !back.ok || back.role !== role ||
+        back.answers[1] !== a || back.answers[2] !== b) dsFails++;
+  }
+}
+check('all 50 special sheets round-trip', dsFails === 0, dsFails + ' failed');
+check('all 50 special codes distinct', dsSeen.size === 50, String(dsSeen.size));
+
+// Every single-character change to every valid code must be rejected or
+// decode to the same sheet.
+let dsMissed = 0;
+for (const code of dsSeen) {
+  const orig = decodeSpecial(code);
+  for (let pos = 0; pos < 3; pos++) for (const ch of ALPHA) {
+    if (ch === code[pos]) continue;
+    const res = decodeSpecial(code.slice(0, pos) + ch + code.slice(pos + 1));
+    if (res.ok && (res.role !== orig.role || res.answers[1] !== orig.answers[1] ||
+        res.answers[2] !== orig.answers[2])) dsMissed++;
+  }
+}
+check('special-code typos all caught', dsMissed === 0, dsMissed + ' slipped through');
+
+check('special code tolerates lowercase and spaces',
+      decodeSpecial(' ' + encodeSpecial('G', { 1: 4, 2: 2 }).toLowerCase() + ' ').ok);
+check('special decoder flags a main code', decodeSpecial(pretty).why === 'main-code');
+check('special decoder rejects junk', !decodeSpecial('').ok && !decodeSpecial('ZZZZ').ok);
+check('special encoder rejects out-of-range', (() => {
+  try { encodeSpecial('F', { 1: 6, 2: 1 }); return false; } catch (e) { return true; }
+})());
+check('special mean averages the pair', specialMean({ 1: 2, 2: 5 }) === 3.5);
+
 console.log('');
 console.log(failures === 0 ? 'All checks passed.' : failures + ' check(s) FAILED.');
 console.log('Example code: ' + pretty);

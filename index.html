@@ -76,6 +76,16 @@
       </div>
     </div>
 
+    <div class="card extra-card">
+      <p class="eyebrow">Optional extra</p>
+      <h2>Feeling desired</h2>
+      <p>
+        Two quick questions you can compare, and a few to talk about. Do it before,
+        after, or instead of the main sheets.
+      </p>
+      <button class="ghost open-desire" type="button">Open</button>
+    </div>
+
     <p id="storage-note" class="error boxed" hidden>
       This browser won’t let the page save anything locally (private browsing, or
       site data is blocked). Everything still works, but nothing will be remembered
@@ -217,6 +227,13 @@
       <button id="compare-btn" class="primary" type="button">Compare</button>
     </div>
 
+    <div class="card extra-card">
+      <p class="eyebrow">Optional extra</p>
+      <h3>Feeling desired</h3>
+      <p>Two quick questions you can compare, and a few to talk about.</p>
+      <button class="ghost open-desire" type="button">Open</button>
+    </div>
+
     <button id="restart" class="ghost quiet" type="button">Start over</button>
   </section>
 
@@ -267,6 +284,111 @@
     <button id="back-to-result" class="ghost quiet" type="button">Back to your result</button>
   </section>
 
+  <!-- =========================================================== desire -->
+  <section id="desire" class="screen" hidden>
+    <p class="eyebrow">Optional extra</p>
+    <h2 tabindex="-1">Feeling desired</h2>
+    <p class="standfirst">
+      Two short questions you can compare, then some to talk about. Separate from
+      the main sheets, and it doesn’t change them.
+    </p>
+
+    <div class="card">
+      <h3>Part one: feeling special</h3>
+      <p class="aside">
+        Two questions, answered for <em>lately</em>. One of you answers about how
+        your partner makes you feel; the other answers about how you make them feel.
+      </p>
+
+      <div class="choose-grid" id="ds-choose">
+        <button id="ds-start-f" class="choice" type="button">
+          <span class="choice-kicker">The receiving side</span>
+          <span class="choice-title">How my partner makes me feel</span>
+        </button>
+        <button id="ds-start-g" class="choice" type="button">
+          <span class="choice-kicker">The giving side</span>
+          <span class="choice-title">How I make my partner feel</span>
+        </button>
+      </div>
+
+      <div id="ds-items" hidden></div>
+
+      <div id="ds-result" hidden>
+        <div id="ds-score"></div>
+        <p>Send this to your partner. It carries your two answers and nothing else.</p>
+        <div class="code-box">
+          <code id="ds-code-out">—</code>
+          <button id="ds-copy" class="ghost" type="button">Copy</button>
+        </div>
+        <label class="field-label" for="ds-partner-code">Got theirs? Paste it to compare.</label>
+        <input id="ds-partner-code" type="text" autocomplete="off" spellcheck="false" placeholder="ABC">
+        <p id="ds-error" class="error" hidden></p>
+        <button id="ds-compare" class="primary" type="button">Compare</button>
+        <div id="ds-comparison" hidden></div>
+        <button id="ds-redo" class="ghost quiet" type="button">Answer again</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Part two: things to talk about</h3>
+      <p class="aside">
+        Nothing to score here. These are worth asking each other out loud, both
+        ways round. Pick one or two.
+      </p>
+      <div id="ds-prompts"></div>
+    </div>
+
+    <details class="note">
+      <summary>Where this comes from, and its limits</summary>
+      <div class="note-body">
+        <p>
+          <strong>Why it sits next to responsiveness.</strong> In a 42-day diary study
+          of couples, on days people felt their partner was more responsive, they also
+          felt more desire for them, and that held for men and women about equally.
+          Feeling special, and seeing the partner as a good catch, carried most of that
+          link.
+        </p>
+        <p>
+          <strong>Why it’s gender-neutral.</strong> Interviews with women and a survey of
+          men turned up much the same things: being told you’re wanted, touch that isn’t
+          leading anywhere, how sex gets started, and being able to say what you want.
+          The clearest difference was about starting things: men more often wanted
+          their partner to start more, women more often wanted it started better. So
+          that question is asked both ways.
+        </p>
+        <p>
+          <strong>What it isn’t.</strong> Part one’s two items come from a daily diary
+          measure with good reliability (α = .83), but they are not a full validated
+          scale, and they were written for the receiving side only. The giving-side
+          wording is this tool’s mirror of them and has never been tested. Part two is
+          drawn from small interview and survey studies, so it is a set of questions,
+          not a measurement. All of the studies were of heterosexual couples, mostly
+          young and mostly white. Your answers in this tab are not saved anywhere.
+        </p>
+        <p class="cite">
+          Birnbaum, G. E., Reis, H. T., Mizrahi, M., Kanat-Maymon, Y., Sass, O., &amp;
+          Granovski-Milner, C. (2016). Intimately connected: The importance of partner
+          responsiveness for experiencing sexual desire. <em>Journal of Personality and
+          Social Psychology, 111</em>(4), 530–546. https://doi.org/10.1037/pspi0000069
+        </p>
+        <p class="cite">
+          Murray, S. H., Milhausen, R. R., &amp; Sutherland, O. (2014). A qualitative
+          comparison of young women’s maintained versus decreased sexual desire in
+          longer-term relationships. <em>Women &amp; Therapy, 37</em>(3–4), 319–341.
+          https://doi.org/10.1080/02703149.2014.897559
+        </p>
+        <p class="cite">
+          Murray, S. H., &amp; Brotto, L. (2021). I want you to want me: A qualitative
+          analysis of heterosexual men’s desire to feel desired in intimate
+          relationships. <em>Journal of Sex &amp; Marital Therapy, 47</em>(5), 419–434.
+          https://doi.org/10.1080/0092623X.2021.1888830
+        </p>
+      </div>
+    </details>
+
+    <button id="ds-back" class="ghost quiet" type="button">Back</button>
+  </section>
+
 </main>
 
 <footer class="foot">
@@ -274,6 +396,7 @@
 </footer>
 
 <script src="app.js"></script>
+<script src="desire.js"></script>
 <script src="store.js"></script>
 <script src="ui.js"></script>
 </body>

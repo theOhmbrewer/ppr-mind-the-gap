@@ -55,9 +55,10 @@ at a URL to test the deployed one: `node test-api.js https://your-worker.workers
 
 | File | What it is |
 |---|---|
-| `index.html` | All five screens: intro, session hub, quiz, your result, comparison |
+| `index.html` | All six screens: intro, session hub, quiz, your result, comparison, feeling desired |
 | `style.css` | Everything visual. Light and dark follow the device setting |
 | `app.js` | Items, scoring, share code. Pure logic, no DOM — this is what `test.js` tests |
+| `desire.js` | The optional Feeling desired tab: its two items, prompts and 3-character code. Also pure |
 | `store.js` | Browser storage and the API client. **The one line you edit after deploying** |
 | `ui.js` | Screens, flow, session hub |
 | `test.js` | Checks on the code and the scoring |
@@ -117,6 +118,26 @@ bits), so they can't be guessed, but they can be forwarded. Send them accordingl
 
 Using codes instead sends nothing anywhere at all.
 
+## The optional "Feeling desired" tab
+
+Reachable from the first screen, your result, and the session hub. Separate
+from the main sheets and doesn't change them. Gender-neutral by design.
+
+**Part one, scored.** The two "feeling special" items from Birnbaum, Reis et
+al. (2016, Study 3; α = .83), on that study's 1–5 scale and averaged as it
+averaged them. One partner answers the receiving side, the other the giving
+side, and they swap a 3-character code to compare. The giving-side wording
+is this tool's mirror of the published items and has never been tested.
+These two items are not a full validated scale, and the page says so.
+
+**Part two, unscored.** Conversation prompts built from the themes in Murray,
+Milhausen & Sutherland (2014) and Murray & Brotto (2021): saying it, touch,
+starting things (asked as both *how often* and *how it lands*, because that's
+where the two papers differ), and saying what you want.
+
+Nothing in this tab is saved or sent anywhere; it doesn't touch the session
+API. Folding the pair into sessions would mean a new sheet type in the Worker.
+
 ## The share code
 
 Your 18 answers in base 9, written in
@@ -165,6 +186,20 @@ Research: Methodology and Measures* (pp. 516–521). Wiley.
 Reis, H. T., Clark, M. S., & Holmes, J. G. (2004). Perceived partner responsiveness as
 an organizing construct in the study of intimacy and closeness. In D. J. Mashek & A.
 Aron (Eds.), *Handbook of Closeness and Intimacy* (pp. 201–225). Lawrence Erlbaum.
+
+Birnbaum, G. E., Reis, H. T., Mizrahi, M., Kanat-Maymon, Y., Sass, O., &
+Granovski-Milner, C. (2016). Intimately connected: The importance of partner
+responsiveness for experiencing sexual desire. *Journal of Personality and Social
+Psychology, 111*(4), 530–546. https://doi.org/10.1037/pspi0000069
+
+Murray, S. H., & Brotto, L. (2021). I want you to want me: A qualitative analysis
+of heterosexual men's desire to feel desired in intimate relationships. *Journal
+of Sex & Marital Therapy, 47*(5), 419–434. https://doi.org/10.1080/0092623X.2021.1888830
+
+Murray, S. H., Milhausen, R. R., & Sutherland, O. (2014). A qualitative comparison
+of young women's maintained versus decreased sexual desire in longer-term
+relationships. *Women & Therapy, 37*(3–4), 319–341.
+https://doi.org/10.1080/02703149.2014.897559
 
 Rice, T. M., Kumashiro, M., & Arriaga, X. B. (2020). Mind the gap: Perceived partner
 responsiveness as a bridge between general and partner-specific attachment security.

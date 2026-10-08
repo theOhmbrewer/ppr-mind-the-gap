@@ -220,7 +220,13 @@ function renderHub() {
       theirs.F, mine.G, 'you')
   );
 
-  body.replaceChildren(tasks, partner, directions);
+  const extra = el('div', { class: 'card extra-card' },
+    el('p', { class: 'eyebrow', text: 'Optional extra' }),
+    el('h3', { text: 'Feeling desired' }),
+    el('p', { text: 'Two quick questions you compare by swapping a short code, and a few to talk about. Not stored in the session.' }),
+    el('button', { class: 'ghost open-desire', type: 'button' }, document.createTextNode('Open')));
+
+  body.replaceChildren(tasks, partner, directions, extra);
 }
 
 function taskRow(title, note, done, role) {
@@ -557,6 +563,171 @@ function flashCopyBtn(text, ms = 1400) {
   flashCopyBtn.timer = setTimeout(() => { b.textContent = b.dataset.label; }, ms);
 }
 
+/* ------------------------------------------------- feeling desired tab */
+
+/* Kept apart from `state` on purpose: nothing here is saved, sent, or mixed
+ * into the main sheets. */
+const ds = { from: 'intro', role: null, answers: {}, code: null };
+
+function openDesire() {
+  const current = document.querySelector('.screen:not([hidden])');
+  ds.from = current && current.id !== 'desire' ? current.id : 'intro';
+  if (!ds.code) resetDesire();
+  show('desire');
+}
+
+function resetDesire() {
+  ds.role = null;
+  ds.answers = {};
+  ds.code = null;
+  $('#ds-choose').hidden = false;
+  $('#ds-items').hidden = true;
+  $('#ds-result').hidden = true;
+  $('#ds-comparison').hidden = true;
+  $('#ds-error').hidden = true;
+  $('#ds-partner-code').value = '';
+}
+
+function startDesire(role) {
+  ds.role = role;
+  ds.answers = {};
+  $('#ds-choose').hidden = true;
+  $('#ds-result').hidden = true;
+  $('#ds-items').hidden = false;
+  renderDesireItems();
+  $('#ds-items h4').focus();
+}
+
+/* Both items on one page: two questions don't need a one-at-a-time flow,
+ * and seeing both makes the pair read as one thing. */
+function renderDesireItems() {
+  const blocks = SPECIAL_ITEMS.map(item => {
+    const scale = el('div', { class: 'scale five', role: 'group',
+      'aria-label': 'Rate from 1, not at all, to 5, very much' });
+    for (let v = 1; v <= 5; v++) {
+      const anchor = SPECIAL_ANCHORS.find(a => a.v === v);
+      scale.append(el('button', {
+        class: 'dot' + (ds.answers[item.id] === v ? ' chosen' : ''),
+        type: 'button',
+        'aria-label': v + (anchor ? ' — ' + anchor.label : ''),
+        'aria-pressed': ds.answers[item.id] === v ? 'true' : 'false',
+        onclick: () => answerDesire(item.id, v)
+      }, el('span', { class: 'dot-num', text: String(v) }),
+         anchor ? el('span', { class: 'dot-label', text: anchor.label }) : null));
+    }
+    return el('div', { class: 'ds-item' },
+      el('h4', { tabindex: '-1', text: ds.role === 'F' ? item.f : item.g }),
+      scale);
+  });
+  $('#ds-items').replaceChildren(...blocks);
+}
+
+function answerDesire(itemId, v) {
+  ds.answers[itemId] = v;
+  renderDesireItems();
+  if (SPECIAL_ITEMS.every(i => ds.answers[i.id])) setTimeout(finishDesire, 180);
+}
+
+function finishDesire() {
+  ds.code = encodeSpecial(ds.role, ds.answers);
+  const m = specialMean(ds.answers);
+  const isF = ds.role === 'F';
+
+  $('#ds-score').replaceChildren(el('div', { class: 'score-row' },
+    el('div', { class: 'score-head' },
+      el('h4', { text: isF ? 'How special your partner makes you feel' : 'How special you believe you make them feel' }),
+      el('div', { class: 'score-num' },
+        el('strong', { text: m.toFixed(1) }),
+        el('span', { text: ' / 5' }))),
+    el('div', { class: 'meter' },
+      el('div', { class: 'meter-fill', style: 'width:' + ((m - 1) / 4 * 100) + '%' })),
+    el('p', { class: 'score-note', text: 'Average of the two — ' + describeSpecial(m) + '.' })));
+
+  $('#ds-code-out').textContent = ds.code;
+  $('#ds-items').hidden = true;
+  $('#ds-result').hidden = false;
+  $('#ds-comparison').hidden = true;
+  $('#ds-score h4').setAttribute('tabindex', '-1');
+  $('#ds-score h4').focus();
+}
+
+function compareDesire() {
+  const theirs = decodeSpecial($('#ds-partner-code').value);
+  const msg = $('#ds-error');
+  const fail = text => { msg.textContent = text; msg.hidden = false; };
+
+  if (!theirs.ok) {
+    return fail(theirs.why === 'main-code'
+      ? 'That’s a code from the main sheets. This part has its own three-character code.'
+      : theirs.why === 'check'
+        ? 'That code doesn’t look right — there may be a typo.'
+        : 'This part’s codes are three characters, like 4KX.');
+  }
+  if (theirs.role === ds.role) {
+    return fail(ds.role === 'F'
+      ? 'You both answered the receiving side. For a comparison, one of you needs the giving side.'
+      : 'You both answered the giving side. For a comparison, one of you needs the receiving side.');
+  }
+  msg.hidden = true;
+
+  const felt = ds.role === 'F' ? ds.answers : theirs.answers;
+  const given = ds.role === 'G' ? ds.answers : theirs.answers;
+  const which = ds.role === 'F' ? 'them' : 'you';
+
+  const line = (label, f, g) => {
+    const d = g - f;
+    return el('div', { class: 'gap-row' },
+      el('h4', { text: label }),
+      el('div', { class: 'gap-bars' },
+        fiveBar('Experienced', f, 'felt'),
+        fiveBar('Intended', g, 'given')),
+      el('p', { class: 'gap-delta ' + (Math.abs(d) < 0.5 ? 'close' : d > 0 ? 'over' : 'under'),
+        text: Math.abs(d) < 0.5
+          ? 'Closely matched'
+          : (d > 0 ? '+' : '') + d.toFixed(1) + ' point gap' }));
+  };
+
+  const d = specialMean(given) - specialMean(felt);
+  const read = Math.abs(d) < 0.5
+    ? 'These sit close together. What’s being given is landing about the way it’s meant to.'
+    : d > 0
+      ? (which === 'them' ? 'They' : 'You') + ' believe more is being given than ' +
+        (which === 'them' ? 'you feel' : 'they feel') +
+        '. The questions below are a good place to find out what would land.'
+      : 'More is landing than is being claimed. Worth saying out loud.';
+
+  $('#ds-comparison').replaceChildren(
+    el('h4', { class: 'section-head', text: which === 'them' ? 'How special they make you feel' : 'How special you make them feel' }),
+    ...SPECIAL_ITEMS.map(i => line(i.short, felt[i.id], given[i.id])),
+    el('p', { class: 'read', text: read }));
+  $('#ds-comparison').hidden = false;
+}
+
+function fiveBar(label, v, cls) {
+  return el('div', { class: 'bar-line' },
+    el('span', { class: 'bar-label', text: label }),
+    el('span', { class: 'bar-track' },
+      el('span', { class: 'bar-fill ' + cls, style: 'width:' + ((v - 1) / 4 * 100) + '%' })),
+    el('span', { class: 'bar-val', text: String(v) }));
+}
+
+function renderDesirePrompts() {
+  $('#ds-prompts').replaceChildren(...DESIRE_PROMPTS.map(t =>
+    el('div', { class: 'prompt-group' },
+      el('h4', { text: t.theme }),
+      el('ul', {}, ...t.prompts.map(p => el('li', { text: p }))))));
+}
+
+function copyDesireCode() {
+  const b = $('#ds-copy');
+  const flash = t => { b.textContent = t; setTimeout(() => { b.textContent = 'Copy'; }, 1600); };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(ds.code).then(() => flash('Copied'), () => flash('Select and copy'));
+  } else {
+    flash('Select and copy');
+  }
+}
+
 /* ---------------------------------------------------------------- wire */
 
 function init() {
@@ -575,6 +746,21 @@ function init() {
   $('#back-to-hub').addEventListener('click', () => { renderHub(); show('hub'); });
   $('#back-to-result').addEventListener('click', () => show('result'));
   $('#partner-code').addEventListener('input', () => { $('#compare-error').hidden = true; });
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('.open-desire')) openDesire();
+  });
+  $('#ds-start-f').addEventListener('click', () => startDesire('F'));
+  $('#ds-start-g').addEventListener('click', () => startDesire('G'));
+  $('#ds-copy').addEventListener('click', copyDesireCode);
+  $('#ds-compare').addEventListener('click', compareDesire);
+  $('#ds-partner-code').addEventListener('input', () => { $('#ds-error').hidden = true; });
+  $('#ds-redo').addEventListener('click', () => { resetDesire(); $('#ds-start-f').focus(); });
+  $('#ds-back').addEventListener('click', () => {
+    if (ds.from === 'hub') renderHub();
+    show(ds.from);
+  });
+  renderDesirePrompts();
 
   $('#forget').addEventListener('click', () => {
     if (!confirm('Forget every answer this browser has saved? This cannot be undone.')) return;
