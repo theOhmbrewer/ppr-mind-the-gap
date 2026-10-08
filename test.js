@@ -140,6 +140,28 @@ check('worker id pattern accepts every client-minted id', badIds === 0, badIds +
 check('worker id pattern rejects I/L/O/U', !ID_RE.test('IIIIIIIIIIIIIIIIIIII') && !ID_RE.test('UUUUUUUUUUUUUUUUUUUU'));
 check('worker id pattern rejects wrong length', !ID_RE.test('ABCD'));
 
+// Gap readings.
+const { gapPattern, GAP_PATTERNS, topGaps } = require('./app.js');
+const fill = (u, v, g = u) => {
+  const a = {};
+  ITEMS.forEach(i => { a[i.id] = i.sub === 'understanding' ? u : i.sub === 'validation' ? v : g; });
+  return a;
+};
+check('pattern: validation gap', gapPattern(fill(6, 4), fill(7, 8)) === 'validation');
+check('pattern: understanding gap', gapPattern(fill(4, 6), fill(8, 7)) === 'understanding');
+check('pattern: even gap', gapPattern(fill(5, 5), fill(7, 7)) === 'both');
+check('pattern: matched', gapPattern(fill(7, 7), fill(7, 7)) === 'matched');
+check('pattern: matched but low', gapPattern(fill(3, 3), fill(3, 3)) === 'matched-low');
+check('pattern: under-claimed', gapPattern(fill(8, 8), fill(6, 6)) === 'under-claimed');
+check('every non-matched pattern has copy',
+      ['understanding', 'validation', 'both', 'matched-low', 'under-claimed'].every(k => GAP_PATTERNS[k]));
+check('no copy for plain matched', !GAP_PATTERNS.matched);
+
+const tg = topGaps(fill(4, 4), Object.assign(fill(4, 4), { 14: 9, 11: 7, 12: 5, 3: 1 }));
+check('topGaps: over sorted, 2-point cut-off', tg.over.map(r => r.item.id).join() === '14,11', tg.over.map(r => r.item.id).join());
+check('topGaps: under found', tg.under.length === 1 && tg.under[0].item.id === 3);
+check('topGaps: at most 3', topGaps(fill(1, 1), fill(9, 9)).over.length === 3);
+
 // ------------------------------------------------ feeling desired tab
 const {
   SPECIAL_ITEMS, DESIRE_PROMPTS, encodeSpecial, decodeSpecial, specialMean

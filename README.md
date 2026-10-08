@@ -8,8 +8,11 @@ answers about themselves ("how well I think I do those things"). Both are descri
 the *same person's* responsiveness — from the inside and the outside. The tool shows
 the distance between the two.
 
-That distance is the point. A large gap usually isn't a story about effort; it's a
-story about effort not arriving in a form the other person recognises.
+That distance is the point. A large gap can mean effort that isn't arriving in a
+form the other person recognises, or a self-rating that's more generous than the
+reality — often some of each. The comparison page offers a reading of where the
+gap sits and a few questions to start on; those are this tool's suggestions, not
+findings from the research.
 
 ## The two ways to use it
 

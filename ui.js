@@ -212,11 +212,11 @@ function renderHub() {
     el('h3', { class: 'section-head', text: 'The two comparisons' }),
     directionCard(
       'How they come across to you',
-      'Their intent against your experience of it.',
+      'Their self-rating against how it feels to you.',
       mine.F, theirs.G, 'them'),
     directionCard(
       'How you come across to them',
-      'Your intent against their experience of it.',
+      'Your self-rating against how it feels to them.',
       theirs.F, mine.G, 'you')
   );
 
@@ -380,7 +380,7 @@ function renderOwnResult() {
     : 'How responsive you believe you are';
 
   $('#result-lede').textContent = isF
-    ? 'This is your experience of being understood and valued by your partner. It is a reading of how things land for you — not a measurement of what your partner intends.'
+    ? 'This is your experience of being understood and valued by your partner. It is a reading of how things land for you — not a measurement of what your partner is trying to give.'
     : 'This is your own account of how you show up for your partner. Where it differs from their experience is the interesting part.';
 
   // The subscales mean different things depending on which side you answered.
@@ -444,8 +444,8 @@ function renderComparison(felt, given, which) {
     : 'How you come across to them';
 
   $('#comparison-lede').textContent = which === 'them'
-    ? 'Two readings of your partner’s responsiveness. Experienced is what lands with you. Intended is what they believe they’re giving.'
-    : 'Two readings of your responsiveness. Experienced is what lands with them. Intended is what you believe you’re giving.';
+    ? 'Two readings of your partner’s responsiveness. Felt is how it lands with you. Self-rated is how they rate what they give.'
+    : 'Two readings of your responsiveness. Felt is how it lands with them. Self-rated is how you rate what you give.';
 
   $('#gap-summary').replaceChildren(
     gapRow('Overall', sf.total, sg.total),
@@ -453,7 +453,9 @@ function renderComparison(felt, given, which) {
     gapRow('Validation', sf.validation, sg.validation)
   );
 
-  $('#gap-read').textContent = readGap(mean(sg.total) - mean(sf.total), which);
+  $('#gap-read').textContent = readGap(mean(sg.total) - mean(sf.total), mean(sf.total), which);
+  renderGapMeaning(felt, given);
+  renderGapTalk(felt, given);
 
   const rows = ITEMS
     .map(item => ({ item, f: felt[item.id], g: given[item.id], d: given[item.id] - felt[item.id] }))
@@ -480,8 +482,8 @@ function gapRow(label, feltPart, givenPart) {
   return el('div', { class: 'gap-row' },
     el('h4', { text: label }),
     el('div', { class: 'gap-bars' },
-      barLine('Experienced', f, 'felt'),
-      barLine('Intended', g, 'given')),
+      barLine('Felt', f, 'felt'),
+      barLine('Self-rated', g, 'given')),
     el('p', { class: 'gap-delta ' + (Math.abs(d) < 0.5 ? 'close' : d > 0 ? 'over' : 'under'),
               text: Math.abs(d) < 0.5
                 ? 'Closely matched (' + (d >= 0 ? '+' : '') + d.toFixed(1) + ')'
@@ -497,17 +499,66 @@ function barLine(label, m, cls) {
     el('span', { class: 'bar-val', text: m.toFixed(1) }));
 }
 
-function readGap(d, which) {
+function readGap(d, feltMean, which) {
   const giver = which === 'them' ? 'They' : 'You';
   const receiver = which === 'them' ? 'you' : 'they';
 
   if (Math.abs(d) < 0.5) {
-    return 'These two readings sit close together. What is being given is landing about the way it was meant to — which is worth noticing, not just the gaps.';
+    return feltMean < 4.5
+      ? 'These two readings sit close together, so what’s being given is landing about the way it’s meant to. You also agree it’s lower than either of you might want — see below.'
+      : 'These two readings sit close together. What’s being given is landing about the way it’s meant to — which is worth noticing, not just the gaps.';
   }
   if (d > 0) {
-    return giver + ' read higher on the giving side than ' + receiver + ' did on the receiving side. That usually is not a story about effort; it is a story about effort not arriving in a form the other person recognises. The per-item view below is where that gets specific.';
+    return giver + ' rated the giving side higher than ' + receiver + ' felt it. Research on responsiveness finds that how it’s felt tends to matter more than what an outsider would see, so the felt side deserves to be taken seriously. A gap like this can mean effort that isn’t arriving in a form that registers, or a self-rating that’s more generous than the reality — often some of each. Both are worth asking about.';
   }
-  return 'More is landing than is being claimed — the receiving side reads higher than the giving side. People often underrate what they actually provide, and this is a good thing to say out loud.';
+  return 'More is landing than is being claimed — the felt side reads higher than the self-rating. People often underrate what they actually give, and this is a good thing to say out loud.';
+}
+
+/* A reading of where the gap sits, with two questions to start on. */
+function renderGapMeaning(felt, given) {
+  const box = $('#gap-meaning');
+  const p = GAP_PATTERNS[gapPattern(felt, given)];
+  if (!p) { box.hidden = true; return; }
+  box.replaceChildren(
+    el('p', { class: 'eyebrow', text: 'What the gap might mean' }),
+    el('h3', { text: p.title }),
+    el('p', { text: p.body }),
+    el('ul', { class: 'talk-list' }, ...p.prompts.map(t => el('li', { text: t }))));
+  box.hidden = false;
+}
+
+/* The few items furthest apart, quoted in full, with one way to take turns
+ * talking about them. The full wording matters: the short labels in the
+ * table lose some of each item's meaning. */
+function renderGapTalk(felt, given) {
+  const box = $('#gap-talk');
+  const { over, under } = topGaps(felt, given);
+  if (!over.length && !under.length) { box.hidden = true; return; }
+
+  const quote = r => el('li', {},
+    el('q', { text: 'My partner ' + r.item.f }),
+    el('span', { class: 'talk-nums', text: ' Felt ' + r.f + ' · Self-rated ' + r.g }));
+
+  const kids = [
+    el('p', { class: 'eyebrow', text: 'Talk about the biggest gaps' }),
+    el('h3', { text: 'Pick one, and take turns' })
+  ];
+  if (over.length) {
+    kids.push(
+      el('ol', { class: 'talk-steps' },
+        el('li', { text: 'The one who felt it goes first: when has this been true, even once? What was happening?' }),
+        el('li', { text: 'The one who rated themselves: what do you do that you mean as this? Your job is to ask questions, not explain or defend.' }),
+        el('li', { text: 'Together: what’s one small, specific way it could show up this week?' })),
+      el('ul', { class: 'talk-items' }, ...over.map(quote)));
+  }
+  if (under.length) {
+    kids.push(
+      el('h4', { text: 'Landing better than claimed' }),
+      el('p', { class: 'aside', text: 'The one who felt it: say what they do that makes these true.' }),
+      el('ul', { class: 'talk-items' }, ...under.map(quote)));
+  }
+  box.replaceChildren(...kids);
+  box.hidden = false;
 }
 
 /* ----------------------------------------------- codes-mode comparison */
@@ -679,8 +730,8 @@ function compareDesire() {
     return el('div', { class: 'gap-row' },
       el('h4', { text: label }),
       el('div', { class: 'gap-bars' },
-        fiveBar('Experienced', f, 'felt'),
-        fiveBar('Intended', g, 'given')),
+        fiveBar('Felt', f, 'felt'),
+        fiveBar('Self-rated', g, 'given')),
       el('p', { class: 'gap-delta ' + (Math.abs(d) < 0.5 ? 'close' : d > 0 ? 'over' : 'under'),
         text: Math.abs(d) < 0.5
           ? 'Closely matched'

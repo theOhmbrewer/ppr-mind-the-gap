@@ -733,3 +733,30 @@ button.big {
 .prompt-group h4 { margin: 0 0 .4rem; }
 .prompt-group ul { margin: 0; padding-left: 1.2rem; color: var(--ink-soft); }
 .prompt-group li { margin-bottom: .4rem; }
+
+/* -------------------------------------------------- gap conversation */
+
+#gap-meaning h3, #gap-talk h3 { margin-top: .2rem; }
+.talk-list, .talk-steps { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--ink-soft); }
+.talk-list li, .talk-steps li { margin-bottom: .45rem; }
+.talk-items { list-style: none; margin: 1rem 0 0; padding: 0; }
+.talk-items li {
+  border-top: 1px solid var(--line);
+  padding: .7rem 0;
+}
+.talk-items q { font-family: var(--serif); font-size: 1.05rem; }
+.talk-nums {
+  display: block;
+  font-size: .8rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  margin-top: .2rem;
+}
+#gap-talk h4 { margin: 1.2rem 0 .2rem; }
+
+/* Four columns have to fit on a phone without a sideways swipe. */
+@media (max-width: 30rem) {
+  .table-scroll table { min-width: 0; }
+  .table-scroll th, .table-scroll td { padding-left: .3rem; padding-right: .3rem; }
+  .table-scroll th { font-size: .62rem; letter-spacing: .02em; }
+}

@@ -11,8 +11,8 @@
  * Two roles, and the distinction is the whole point of the tool:
  *   F ("felt")  — you rate your PARTNER's responsiveness to you.
  *   G ("given") — you rate YOUR OWN responsiveness to your partner.
- * One of each, about the same person, gives the gap between what someone
- * intends and what the other actually experiences.
+ * One of each, about the same person, gives the gap between how someone
+ * rates what they give and how the other actually feels it.
  */
 
 /* ---------------------------------------------------------------- items */
@@ -79,7 +79,7 @@ const ITEMS = [
   { id: 14, sub: 'validation',    in12: true,
     f: 'expresses liking and encouragement for me.',
     g: 'express liking and encouragement for them.',
-    short: 'Expresses encouragement' },
+    short: 'Expresses liking and encouragement' },
   { id: 15, sub: 'validation',    in12: true,
     f: 'seems interested in what I am thinking and feeling.',
     g: 'am interested in what they are thinking and feeling.',
@@ -91,7 +91,7 @@ const ITEMS = [
   { id: 17, sub: 'validation',    in12: true,
     f: 'values my abilities and opinions.',
     g: 'value their abilities and opinions.',
-    short: 'Values my abilities' },
+    short: 'Values my abilities and opinions' },
   { id: 18, sub: 'validation',    in12: false,
     f: 'respects me.',
     g: 'respect them.',
@@ -235,10 +235,89 @@ function describe(m) {
   return 'toward “not at all true”';
 }
 
+/* ------------------------------------------------------------ the gaps */
+
+/* Which kind of gap this is, so the page can offer a reading of it. The
+ * thresholds are the same half point the comparison already uses for
+ * "closely matched". These readings, and the conversation prompts that go
+ * with them, are this tool's suggestions — they are not findings from the
+ * papers, and the page says so. */
+function gapPattern(felt, given) {
+  const sf = score(felt);
+  const sg = score(given);
+  const dU = mean(sg.understanding) - mean(sf.understanding);
+  const dV = mean(sg.validation) - mean(sf.validation);
+  const dT = mean(sg.total) - mean(sf.total);
+
+  if (dU < 0.5 && dV < 0.5) {
+    if (dT <= -0.5) return 'under-claimed';
+    return mean(sf.total) < 4.5 ? 'matched-low' : 'matched';
+  }
+  if (dV - dU >= 1) return 'validation';
+  if (dU - dV >= 1) return 'understanding';
+  return 'both';
+}
+
+const GAP_PATTERNS = {
+  understanding: {
+    title: 'Mostly about feeling known',
+    body: 'The biggest gap is in the Understanding items — feeling accurately known, that your partner gets the facts right about you and sees the real you. A gap here often comes down to information: things that haven’t been said, things that have changed, or things being assumed from how they used to be.',
+    prompts: [
+      'For the one who felt it: what’s something about you lately that you think they’ve missed?',
+      'For the one who rated themselves: what would you guess is on their mind this week? Say it, and let them correct you.'
+    ]
+  },
+  validation: {
+    title: 'Mostly about feeling valued',
+    body: 'The biggest gap is in the Validation items — feeling appreciated for who you actually are. A gap here often means appreciation that’s felt but not shown, or shown in a way that doesn’t register with the other person.',
+    prompts: [
+      'For the one who felt it: when did you last feel really appreciated by them? What did they do?',
+      'For the one who rated themselves: what do you appreciate about them that you haven’t said out loud lately?'
+    ]
+  },
+  both: {
+    title: 'Spread across the board',
+    body: 'The gap is about the same for feeling known and feeling valued, so it’s less about one kind of thing than about how much is getting through in general.',
+    prompts: [
+      'For the one who felt it: describe one recent moment when you did feel understood and valued. What made it work?',
+      'For the one who rated themselves: what do you do that you mean as care, that might not be obvious from the outside?'
+    ]
+  },
+  'matched-low': {
+    title: 'You agree — and it’s lower than either of you might want',
+    body: 'There isn’t much of a gap here: you both see it about the same way. That makes it a different conversation from a gap. It’s not “why don’t you see it”, it’s “what would help, for both of us?”',
+    prompts: [
+      'Was there a time this felt better? What was different then?',
+      'What’s one thing that would make the biggest difference this month — and what would make it easier to do?'
+    ]
+  },
+  'under-claimed': {
+    title: 'Landing better than claimed',
+    body: 'More is landing than is being claimed. People often underrate what they actually give, and hearing what lands is the easiest way to make sure it keeps happening.',
+    prompts: [
+      'For the one who felt it: name one specific thing they do that lands.',
+      'For the one who rated themselves: what made you rate yourself lower? Does hearing this change it?'
+    ]
+  }
+};
+
+/* The items furthest apart, in each direction, for the conversation card.
+ * Two points on a nine-point scale is the cut-off, so a one-point difference
+ * doesn't get singled out. That is a judgement call, not a published
+ * threshold. */
+function topGaps(felt, given, n = 3, min = 2) {
+  const rows = ITEMS.map(item => ({ item, f: felt[item.id], g: given[item.id], d: given[item.id] - felt[item.id] }));
+  return {
+    over: rows.filter(r => r.d >= min).sort((a, b) => b.d - a.d).slice(0, n),
+    under: rows.filter(r => r.d <= -min).sort((a, b) => a.d - b.d).slice(0, n)
+  };
+}
+
 /* Exported for test.js; harmless in the browser. */
 if (typeof module !== 'undefined') {
   module.exports = {
     ITEMS, ANCHORS, encodeSheet, decodeSheet, checkChar, prettyCode,
-    answersToList, listToAnswers, score, mean, describe
+    answersToList, listToAnswers, score, mean, describe,
+    gapPattern, GAP_PATTERNS, topGaps
   };
 }
